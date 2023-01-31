@@ -13,6 +13,22 @@ local utils = require("telescope.utils")
 -- TODO: move this
 local M = {}
 
+local function make_glob()
+  -- local current_file = vim.fn.expand("%:p")
+  -- local extension = vim.fn.expand("%:e")
+  -- NOTE: This is not the "real" base_directory
+  local base_directory = vim.fn.expand("%:h")
+  local no_extension = vim.fn.expand("%:r")
+
+  local search_pattern = "**/" .. no_extension .. "*"
+
+  return {
+    base_directory = base_directory,
+    search_pattern = search_pattern,
+  }
+
+end
+
 M.find = function(opts)
   local has_fd = vim.fn.executable("fd")
 
@@ -58,7 +74,8 @@ end
 
 -- return M
 --
-M.find({
-  search_pattern = "**/app.html",
-  base_directory = "/Users/jls83",
-})
+-- M.find({
+--   search_pattern = "**/app.html",
+--   base_directory = "/Users/jls83/other_projects/cpp_interface_junk",
+-- })
+M.find(make_glob())
