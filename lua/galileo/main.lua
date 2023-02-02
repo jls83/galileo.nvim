@@ -6,6 +6,52 @@ local utils = require("telescope.utils")
 
 local M = {}
 
+local build_find_command = function(opts)
+  local default_opts = {
+    -- TODO: Eh.
+    include_hidden = true,
+    ignore_files = true,
+    absolute_path = true,
+    glob = true,
+  }
+
+  -- TODO: merge opts
+  local local_opts = vim.tbl_deep_extend("force", default_opts, opts)
+
+  -- TODO: Do we need to allow --type changes?
+  local find_command = { "fd", "--type", "f", "--color", "never" }
+
+  if local_opts.include_hidden then
+    find_command[#find_command + 1] = "--hidden"
+  end
+
+  if not local_opts.ignore_files then
+    find_command[#find_command + 1] = "--no-ignore"
+  end
+
+  if local_opts.absolute_path then
+    find_command[#find_command + 1] = "--absolute-path"
+  end
+
+  if local_opts.base_directory ~= nil then
+    vim.list_extend(find_command, { "--base-directory", local_opts.base_directory })
+  end
+
+  if local_opts.depth ~= nil then
+    vim.list_extend(find_command, { "--max-depth", tostring(local_opts.depth) })
+  end
+
+  if local_opts.glob then
+    vim.list_extend(find_command, { "--glob", local_opts.search_pattern })
+  else
+    vim.list_extend(find_command, { "--regex", local_opts.search_pattern })
+  end
+
+  local_opts.entry_maker = local_opts.entry_maker or make_entry.gen_from_file(local_opts)
+
+  return find_command
+end
+
 M.find = function(opts)
   local has_fd = vim.fn.executable("fd")
 
@@ -17,25 +63,7 @@ M.find = function(opts)
     return
   end
 
-  local find_command = { "fd", "--type", "f", "--color", "never" }
-
-  -- TODO: Change this to use `opts`
-  find_command[#find_command + 1] = "--hidden"
-  find_command[#find_command + 1] = "--no-ignore"
-  -- find_command[#find_command + 1] = "--follow"
-  find_command[#find_command + 1] = "--glob"
-  -- find_command[#find_command + 1] = "--full-path"
-  -- TODO: maybe use the make_entry to lop off the beginning?
-  -- find_command[#find_command + 1] = "--absolute-path"
-
-  -- TODO: error handling
-  -- vim.list_extend(find_command, { "--base-directory", opts.base_directory })
-  vim.list_extend(find_command, { "-d", 1 })
-
-  -- Search pattern
-  find_command[#find_command + 1] = opts.search_pattern
-
-  opts.entry_maker = opts.entry_maker or make_entry.gen_from_file(opts)
+  local find_command = build_find_command(opts)
 
   -- TODO: log this
   print(vim.inspect(find_command))
