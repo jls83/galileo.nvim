@@ -2,7 +2,9 @@ local conf = require("telescope.config").values
 local finders = require("telescope.finders")
 local make_entry = require("telescope.make_entry")
 local pickers = require("telescope.pickers")
-local utils = require("telescope.utils")
+local telescope_utils = require("telescope.utils")
+
+local utils = require("galileo.utils")
 
 local M = {}
 
@@ -56,7 +58,7 @@ M.find = function(opts)
   local has_fd = vim.fn.executable("fd")
 
   if not has_fd then
-    utils.notify("galileo.find", {
+    telescope_utils.notify("galileo.find", {
       msg = "You need to install fd",
       level = "ERROR",
     })
