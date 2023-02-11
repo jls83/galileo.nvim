@@ -4,7 +4,7 @@ if not has_telescope then
   error("This extension requires telescope.nvim (https://github.com/nvim-telescope/telescope.nvim)")
 end
 
--- TODO: Check for plenary also? Telescope requires plenary...
+-- TODO: check for `rg`
 
 local conf = require("telescope.config").values
 local finders = require("telescope.finders")
