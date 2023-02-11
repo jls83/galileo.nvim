@@ -11,7 +11,8 @@ local finders = require("telescope.finders")
 local make_entry = require("telescope.make_entry")
 local pickers = require("telescope.pickers")
 
-local g_search = require("galileo.search")
+local galileo = require('galileo')
+local g_search = require('galileo.search')
 
 local transform_find_results = function(find_results)
   local res = {}
@@ -28,9 +29,12 @@ local transform_find_results = function(find_results)
 end
 
 local g_telescope_find = function(opts)
-  local current_filename = vim.fn.expand('%:p')
-  local find_results = g_search.search_default(current_filename)
-  -- local find_results = g_search.search(current_filename, opts)
+  local opts = opts or {}
+
+  local find_results = g_search.search(
+    vim.fn.expand('%:p'),
+    galileo.config.patterns
+  )
 
   local picker = pickers
     .new(opts, {
