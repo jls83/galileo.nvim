@@ -4,11 +4,58 @@ if not has_telescope then
   error("This extension requires telescope.nvim (https://github.com/nvim-telescope/telescope.nvim)")
 end
 
-local main = require("galileo.main")
+-- TODO: Check for plenary also? Telescope requires plenary...
+
+local conf = require("telescope.config").values
+local finders = require("telescope.finders")
+local make_entry = require("telescope.make_entry")
+local pickers = require("telescope.pickers")
+
+local g_search = require("galileo.search")
+
+local transform_find_results = function(find_results)
+  local res = {}
+  for k, v in pairs(find_results) do
+  -- TODO: figure out the right thing to show?
+    local finder_obj = {
+      text = k .. ' ' .. v,
+      filename = v,
+    }
+    table.insert(res, finder_obj)
+  end
+
+  return res
+end
+
+local g_telescope_find = function(opts)
+  local current_filename = vim.fn.expand('%:p')
+  local find_results = g_search.search_default(current_filename)
+  -- local find_results = g_search.search(current_filename, opts)
+
+  local picker = pickers
+    .new(opts, {
+        prompt_title = "Galileo",
+        finder = finders.new_table({
+          results = transform_find_results(find_results),
+          entry_maker = function(entry)
+            return make_entry.set_default_entry_mt({
+              value = entry,
+              text = entry.text,
+              display = entry.text, -- TODO
+              ordinal = entry.text,
+              filename = entry.filename,
+            }, opts)
+          end,
+        }),
+        previewer = conf.file_previewer(opts),
+        sorter = conf.file_sorter(opts),
+    })
+  picker:find()
+end
 
 return telescope.register_extension({
-    exports = {
-        find = main.find,
-    },
+  exports = {
+    find = g_telescope_find,
+  },
 })
 
