@@ -30,14 +30,14 @@ local g_constants = require('galileo.constants')
 
 -- We can set up some Lua strings that define items we'll reuse in the pattern
 -- definitions, including a regex capture group.
-local project_dir = '/path/to/my_cpp/project'
+local project_dir = '/path/to/my_cpp_project'
 local cg = '(' .. g_constants.posix_portable_filename .. ')'
 
 galileo.setup({
   patterns = {
     {
       -- We can use a Lua string to define a regex:
-      pattern = [[/Users/jls83/other_projects/([a-z_]+)/([a-z]+)\.h]],
+      pattern = [[/path/to/my_cpp_project/([a-z_]+)/([a-z]+)\.h]],
       -- Then use the ${N} syntax to define how we'll use the captured items in
       -- the result.
       subs = {
@@ -50,16 +50,16 @@ galileo.setup({
       -- read/create.
       pattern = project_dir .. '/' .. cg .. '/' .. cg .. [[\.cc]],
       subs = {
-        '/Users/jls83/other_projects/${1}/${2}.h',
-        '/Users/jls83/other_projects/${1}/${2}_test.cc',
+        '/path/to/my_cpp_project/${1}/${2}.h',
+        '/path/to/my_cpp_project/${1}/${2}_test.cc',
       },
     },
     {
       -- Finally, we can use named capture groups & named substitutions.
-      pattern = [[/Users/jls83/other_projects/(?P<project_name>[a-z_]+)/(?P<module_name>[a-z]+)_test\.cc]],
+      pattern = [[/path/to/my_cpp_project/(?P<project_name>[a-z_]+)/(?P<module_name>[a-z]+)_test\.cc]],
       subs = {
-        '/Users/jls83/other_projects/${project_name}/${module_name}.h',
-        '/Users/jls83/other_projects/${project_name}/${module_name}.cc',
+        '/path/to/my_cpp_project/${project_name}/${module_name}.h',
+        '/path/to/my_cpp_project/${project_name}/${module_name}.cc',
       },
     },
   },
