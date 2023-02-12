@@ -68,4 +68,3 @@ galileo.setup({
 Next, open `foo.h`, then invoke `:Telescope galileo find`. Use the Telescope picker to open any of the related files!
 
 [![asciicast](https://asciinema.org/a/e765u8YviplJSqfBMZOhoOUgw.svg)](https://asciinema.org/a/e765u8YviplJSqfBMZOhoOUgw)
-
