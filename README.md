@@ -41,8 +41,8 @@ galileo.setup({
       -- Then use the ${N} syntax to define how we'll use the captured items in
       -- the result.
       subs = {
-        project_dir .. '/${1}/${2}.cc',
-        project_dir .. '/${1}/${2}_test.cc',
+        '/path/to/my_cpp_project/${1}/${2}.cc',
+        '/path/to/my_cpp_project/${1}/${2}_test.cc',
       },
     },
     {
@@ -50,16 +50,21 @@ galileo.setup({
       -- read/create.
       pattern = project_dir .. '/' .. cg .. '/' .. cg .. [[\.cc]],
       subs = {
-        '/path/to/my_cpp_project/${1}/${2}.h',
-        '/path/to/my_cpp_project/${1}/${2}_test.cc',
+        project_dir .. '/${1}/${2}.h',
+        project_dir .. '/${1}/${2}_test.cc',
       },
     },
     {
       -- Finally, we can use named capture groups & named substitutions.
-      pattern = [[/path/to/my_cpp_project/(?P<project_name>[a-z_]+)/(?P<module_name>[a-z]+)_test\.cc]],
+      pattern = project_dir ..
+        '(?P<project_name>' ..
+        g_constants.posix_portable_filename ..
+        '+)/(?P<module_name>' ..
+        g_constants.posix_portable_filename ..
+        [[+)_test\.cc]],
       subs = {
-        '/path/to/my_cpp_project/${project_name}/${module_name}.h',
-        '/path/to/my_cpp_project/${project_name}/${module_name}.cc',
+        project_dir .. '/${project_name}/${module_name}.h',
+        project_dir .. '/${project_name}/${module_name}.cc',
       },
     },
   },
