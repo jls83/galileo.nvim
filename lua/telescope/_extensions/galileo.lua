@@ -1,11 +1,4 @@
-local has_telescope, telescope = pcall(require, "telescope")
-
-if not has_telescope then
-  error("This extension requires telescope.nvim (https://github.com/nvim-telescope/telescope.nvim)")
-end
-
--- TODO: check for `rg`
-
+local telescope = require("telescope")
 local conf = require("telescope.config").values
 local finders = require("telescope.finders")
 local make_entry = require("telescope.make_entry")
