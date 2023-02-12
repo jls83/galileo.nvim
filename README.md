@@ -1,6 +1,7 @@
 # Galileo
 
 ## Install
+__NOTE:__ This plugin requires [ripgrep](https://github.com/BurntSushi/ripgrep).
 
 Packer.nvim
 ```lua
