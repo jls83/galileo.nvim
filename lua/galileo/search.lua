@@ -73,32 +73,4 @@ M.search = function(filename, t)
   return results
 end
 
-local things = {
-  {
-    pattern = [[/Users/jls83/other_projects/([a-z_]+)/([a-z]+)\.h]],
-    subs = {
-      '/Users/jls83/other_projects/${1}/${2}.cc',
-      '/Users/jls83/other_projects/${1}/${2}_test.cc',
-    },
-  },
-  {
-    pattern = [[/Users/jls83/other_projects/([a-z_]+)/([a-z]+)\.cc]],
-    subs = {
-      '/Users/jls83/other_projects/${1}/${2}.h',
-      '/Users/jls83/other_projects/${1}/${2}_test.cc',
-    },
-  },
-  {
-    pattern = [[/Users/jls83/other_projects/([a-z_]+)/([a-z]+)_test\.cc]],
-    subs = {
-      '/Users/jls83/other_projects/${1}/${2}.h',
-      '/Users/jls83/other_projects/${1}/${2}.cc',
-    },
-  },
-}
-
-M.search_default = function(filename)
-  return M.search(filename, things)
-end
-
 return M

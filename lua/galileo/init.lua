@@ -17,7 +17,7 @@ M.config = {
 
 M.setup = function(config)
   if config.patterns == nil then
-    -- TODO: Alert
+    error("You must pass in a `patterns` key.")
     return
   end
   M.config = vim.tbl_extend("force", M.config, config or {})
