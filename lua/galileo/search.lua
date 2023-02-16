@@ -7,12 +7,28 @@ M.job_def_factory_builder = function(opts, tx)
   return (function(filename)
     local job_defs = {}
 
-    for sub, result_pattern in pairs(opts.subs) do
+    for sub, what_thing_who in pairs(opts.subs) do
       -- If the sub has a name, use that as the data_key. Otherwise, swap in
       -- `ITEM_N`, where `N` is the index of the sub in the input table.
       local data_key = sub
       if type(sub) ~= 'string' then
         data_key = "ITEM_" .. tostring(sub)
+      end
+
+      local result_pattern = ""
+
+      if type(what_thing_who) == "string" then
+        result_pattern = what_thing_who
+      elseif type(what_thing_who) == "function" then
+        -- TODO: Explain!
+        local func_info = debug.getinfo(what_thing_who)
+        if func_info.isvararg then
+          error("Functions must not be variable arity")
+        end
+
+        for i = 1, func_info.nparams, 1 do
+          result_pattern = result_pattern .. " $" .. i
+        end
       end
 
       local job_def = {
