@@ -29,20 +29,28 @@ local g_telescope_find = function(opts)
     galileo.config.patterns
   )
 
+  local entry_maker
+  if opts.entry_maker then
+    entry_maker = opts.entry_maker
+  else
+    entry_maker = function(entry)
+      return make_entry.set_default_entry_mt({
+        value = entry,
+        text = entry.text,
+        display = entry.text, -- TODO
+        ordinal = entry.text,
+        filename = entry.filename,
+      }, opts)
+    end
+  end
+
+
   local picker = pickers
     .new(opts, {
         prompt_title = "Galileo",
         finder = finders.new_table({
           results = transform_find_results(find_results),
-          entry_maker = function(entry)
-            return make_entry.set_default_entry_mt({
-              value = entry,
-              text = entry.text,
-              display = entry.text, -- TODO
-              ordinal = entry.text,
-              filename = entry.filename,
-            }, opts)
-          end,
+          entry_maker = entry_maker,
         }),
         previewer = conf.file_previewer(opts),
         sorter = conf.file_sorter(opts),
