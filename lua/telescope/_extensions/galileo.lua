@@ -26,6 +26,7 @@ local transform_find_results = function(find_results)
   return res
 end
 
+-- TODO: override other `select_` behavior?
 local select_default = function(prompt_bufnr)
   actions.close(prompt_bufnr)
   local selection = action_state.get_selected_entry()
@@ -33,7 +34,8 @@ local select_default = function(prompt_bufnr)
   print(vim.inspect(selection))
 
   if selection.fn == nil then
-    print("Yee haw")
+    -- TODO: Doc, consider this. maybe key on `filename`?
+    vim.cmd('edit' .. selection.filename)
   else
     -- TODO: change name
     local fn_args = vim.split(selection.result, " ")
