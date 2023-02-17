@@ -3,6 +3,8 @@ local conf = require("telescope.config").values
 local finders = require("telescope.finders")
 local make_entry = require("telescope.make_entry")
 local pickers = require("telescope.pickers")
+local actions = require("telescope.actions")
+local action_state = require("telescope.actions.state")
 
 local galileo = require('galileo')
 local g_search = require('galileo.search')
@@ -10,15 +12,39 @@ local g_search = require('galileo.search')
 local transform_find_results = function(find_results)
   local res = {}
   for k, v in pairs(find_results) do
-  -- TODO: figure out the right thing to show?
+  -- TODO: figure out the right thing to show
     local finder_obj = {
-      text = k .. ' ' .. v,
-      filename = v,
+      text = k .. ' ' .. v.result,
+      filename = v.result,
+      -- TODO: Gonna use this as the actual value.
+      result = v.result,
+      fn = v.fn,
     }
     table.insert(res, finder_obj)
   end
 
   return res
+end
+
+local select_default = function(prompt_bufnr)
+  actions.close(prompt_bufnr)
+  local selection = action_state.get_selected_entry()
+
+  print(vim.inspect(selection))
+
+  if selection.fn == nil then
+    print("Yee haw")
+  else
+    -- TODO: change name
+    local fn_args = vim.split(selection.result, " ")
+    print(vim.inspect(fn_args))
+
+    local fn = selection.fn
+    print(vim.inspect(fn))
+
+    local foo = fn(unpack(fn_args))
+    print(vim.inspect(foo))
+  end
 end
 
 local g_telescope_find = function(opts)
@@ -34,13 +60,15 @@ local g_telescope_find = function(opts)
     entry_maker = opts.entry_maker
   else
     entry_maker = function(entry)
-      return make_entry.set_default_entry_mt({
+      return {
         value = entry,
         text = entry.text,
         display = entry.text, -- TODO
         ordinal = entry.text,
         filename = entry.filename,
-      }, opts)
+        result = entry.result,
+        fn = entry.fn,
+      }
     end
   end
 
@@ -52,8 +80,14 @@ local g_telescope_find = function(opts)
           results = transform_find_results(find_results),
           entry_maker = entry_maker,
         }),
-        previewer = conf.file_previewer(opts),
+        -- previewer = conf.file_previewer(opts),
         sorter = conf.file_sorter(opts),
+        attach_mappings = function(prompt_bufnr, _)
+          actions.select_default:replace(function()
+            select_default(prompt_bufnr)
+          end)
+          return true
+        end,
     })
   picker:find()
 end

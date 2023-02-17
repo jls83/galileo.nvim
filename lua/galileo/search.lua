@@ -1,21 +1,38 @@
 local Job = require('plenary.job')
 local a = require('plenary.async')
 
+-- TODO: Replace this with a library?
+local random = math.random
+local function uuid()
+    local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+    return string.gsub(template, '[xy]', function (c)
+        local v = (c == 'x') and random(0, 0xf) or random(8, 0xb)
+        return string.format('%x', v)
+    end)
+end
+
 M = {}
 
 M.job_def_factory_builder = function(opts, tx)
-  return (function(filename)
+  local job_def_factory = function(filename)
     local job_defs = {}
 
-    for sub, what_thing_who in pairs(opts.subs) do
+    -- If `what_thing_who` is a function, add it to a table to use later.
+    local sub_functions = {}
+
+    for _, what_thing_who in pairs(opts.subs) do
+      -- TODO: Fix docs.
       -- If the sub has a name, use that as the data_key. Otherwise, swap in
       -- `ITEM_N`, where `N` is the index of the sub in the input table.
-      local data_key = sub
-      if type(sub) ~= 'string' then
-        data_key = "ITEM_" .. tostring(sub)
-      end
+      -- local data_key = sub
+      -- if type(sub) ~= 'string' then
+      --   data_key = "ITEM_" .. tostring(sub)
+      -- end
+      local data_key = uuid()
 
       local result_pattern = ""
+
+      print("Sub type: " .. type(what_thing_who))
 
       if type(what_thing_who) == "string" then
         result_pattern = what_thing_who
@@ -26,9 +43,18 @@ M.job_def_factory_builder = function(opts, tx)
           error("Functions must not be variable arity")
         end
 
+        local arg_list = {}
+
         for i = 1, func_info.nparams, 1 do
-          result_pattern = result_pattern .. " $" .. i
+          local arg = "$" .. i
+          table.insert(arg_list, arg)
         end
+
+        print('Inserting a func for ' .. data_key)
+        sub_functions[data_key] = what_thing_who
+
+        -- TODO: Better delimiter? Use constant?
+        result_pattern = table.concat(arg_list, " ")
       end
 
       local job_def = {
@@ -50,8 +76,10 @@ M.job_def_factory_builder = function(opts, tx)
       table.insert(job_defs, job_def)
     end
 
-    return job_defs
-  end)
+    return job_defs, sub_functions
+  end
+
+  return job_def_factory
 end
 
 M.search = function(filename, t)
@@ -59,9 +87,15 @@ M.search = function(filename, t)
 
   local all_jobs = {}
 
+  local sub_functions = {}
+
   for _, thing in pairs(t) do
     local job_def_factory = M.job_def_factory_builder(thing, sender)
-    local job_defs = job_def_factory(filename)
+    local job_defs, inner_sub_functions = job_def_factory(filename)
+
+    for data_key, fn in pairs(inner_sub_functions) do
+      sub_functions[data_key] = fn
+    end
 
     for _, job_def in pairs(job_defs) do
       local job = Job:new(job_def)
@@ -78,11 +112,26 @@ M.search = function(filename, t)
   -- jobs to control the number of iterations.
   for _ = 1, #all_jobs, 1 do
     local job_output = receiver.recv()
-    for sub, result in pairs(job_output) do
+    for data_key, result in pairs(job_output) do
       -- Only include subs if they had a result.
-      if #result ~= 0 then
-        results[sub] = result[1]
+      if #result == 0 then
+        goto continue
       end
+
+      local blah = {}
+      blah['result'] = result[1]
+
+
+      local fn = sub_functions[data_key]
+      if fn ~= nil then
+        blah['fn'] = fn
+      else
+        print('Did not find fn for ' .. data_key)
+      end
+
+      table.insert(results, blah)
+
+      ::continue::
     end
   end
 
