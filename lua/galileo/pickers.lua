@@ -3,6 +3,7 @@ local finders = require("telescope.finders")
 local conf = require("telescope.config").values
 local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
+local action_set = require("telescope.actions.set")
 
 local galileo = require("galileo")
 local g_search = require("galileo.search")
@@ -12,27 +13,25 @@ local M = {}
 
 -- TODO: override other `select_` behavior?
 M._select_default = function(prompt_bufnr)
-  actions.close(prompt_bufnr)
   local selection = action_state.get_selected_entry()
 
-  if selection == nil then
+  -- `action_set.select` is the default behavior for the picker. Use that if we
+  -- don't have a result, or we don't have a `fn`(i.e. we _do_ have a filename).
+  if selection == nil or selection.fn == nil then
+    action_set.select(prompt_bufnr, "default")
     return
-  elseif selection.fn == nil then
-    -- TODO: Doc, consider this. maybe key on `filename`?
-    -- TODO: use action_set from telescope for this:
-    -- https://github.com/nvim-telescope/telescope.nvim/blob/203bf5609137600d73e8ed82703d6b0e320a5f36/lua/telescope/actions/set.lua#L91-L97
-    vim.cmd("edit" .. selection.filename)
-  else
-    local fn_args = vim.split(
-      selection.result,
-      g_constants.FUNCTION_RESULT_DELIMITER
-    )
-
-    local fn = selection.fn
-
-    -- TODO: Use result?
-    fn(unpack(fn_args))
   end
+
+  actions.close(prompt_bufnr)
+  local fn_args = vim.split(
+    selection.result,
+    g_constants.FUNCTION_RESULT_DELIMITER
+  )
+
+  local fn = selection.fn
+
+  -- TODO: Use result?
+  fn(unpack(fn_args))
 end
 
 M._transform_find_results = function(find_results)
