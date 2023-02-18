@@ -62,8 +62,8 @@ M._get_text_from_finder_result = function(find_result)
   return text
 end
 
-M.g_telescope_find = function(opts)
-  local opts = opts or {}
+M.g_telescope_find = function(outer_opts)
+  local opts = outer_opts or {}
 
   local search_results = g_search.search(
     vim.fn.expand("%:p"),
@@ -88,23 +88,24 @@ M.g_telescope_find = function(opts)
     end
   end
 
+  -- `previewer` will be `nil` unless explicitly set at setup.
+  local previewer = opts.previewer
 
-  local picker = pickers
-    .new(opts, {
-        prompt_title = "Galileo",
-        finder = finders.new_table({
-          results = M._transform_search_results(search_results),
-          entry_maker = entry_maker,
-        }),
-        -- previewer = conf.file_previewer(opts),
-        sorter = conf.file_sorter(opts),
-        attach_mappings = function(prompt_bufnr, _)
-          actions.select_default:replace(function()
-            M._select_default(prompt_bufnr)
-          end)
-          return true
-        end,
-    })
+  local picker = pickers.new(opts, {
+    prompt_title = "Galileo",
+    finder = finders.new_table({
+      results = M._transform_search_results(search_results),
+      entry_maker = entry_maker,
+    }),
+    previewer = previewer,
+    sorter = conf.generic_sorter(opts),
+    attach_mappings = function(prompt_bufnr, _)
+      actions.select_default:replace(function()
+        M._select_default(prompt_bufnr)
+      end)
+      return true
+    end,
+  })
   picker:find()
 end
 
