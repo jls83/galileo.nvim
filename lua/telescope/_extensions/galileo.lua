@@ -39,23 +39,15 @@ local select_default = function(prompt_bufnr)
   actions.close(prompt_bufnr)
   local selection = action_state.get_selected_entry()
 
-  print(vim.inspect(selection))
-
   if selection == nil then
     return
   elseif selection.fn == nil then
     -- TODO: Doc, consider this. maybe key on `filename`?
     vim.cmd('edit' .. selection.filename)
   else
-    -- TODO: change name
     local fn_args = vim.split(selection.result, " ")
-    print(vim.inspect(fn_args))
-
     local fn = selection.fn
-    print(vim.inspect(fn))
-
-    local foo = fn(unpack(fn_args))
-    print(vim.inspect(foo))
+    local fn_result = fn(unpack(fn_args))
   end
 end
 

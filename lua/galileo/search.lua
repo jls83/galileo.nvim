@@ -36,8 +36,6 @@ M.job_def_factory_builder = function(opts, tx)
 
       local result_pattern = ""
 
-      print("Sub type: " .. type(on_match))
-
       if type(on_match) == "string" then
         result_pattern = on_match
       elseif type(on_match) == "function" then
@@ -54,7 +52,6 @@ M.job_def_factory_builder = function(opts, tx)
           table.insert(arg_list, arg)
         end
 
-        print('Inserting a func for ' .. data_key)
         sub_functions[data_key] = on_match
 
         -- TODO: Better delimiter? Use constant?
@@ -134,8 +131,6 @@ M.search = function(filename, t)
       local fn = sub_functions[data_key]
       if fn ~= nil then
         blah['fn'] = fn
-      else
-        print('Did not find fn for ' .. data_key)
       end
 
       table.insert(results, blah)
