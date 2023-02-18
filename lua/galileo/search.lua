@@ -81,16 +81,15 @@ M.job_def_factory_builder = function(opts, tx)
   return job_def_factory
 end
 
-M.search = function(filename, t)
+M.search = function(filename, rules)
   local sender, receiver = a.control.channel.mpsc()
 
   local all_jobs = {}
-
   local sub_functions = {}
   local data_key_to_sub = {}
 
-  for _, thing in pairs(t) do
-    local job_def_factory = M.job_def_factory_builder(thing, sender)
+  for _, rule in pairs(rules) do
+    local job_def_factory = M.job_def_factory_builder(rule, sender)
     local job_defs, inner_sub_functions, inner_data_key_to_sub = job_def_factory(filename)
 
     for data_key, fn in pairs(inner_sub_functions) do
@@ -116,22 +115,22 @@ M.search = function(filename, t)
   -- jobs to control the number of iterations.
   for _ = 1, #all_jobs, 1 do
     local job_output = receiver.recv()
-    for data_key, result in pairs(job_output) do
+    for data_key, job_result in pairs(job_output) do
       -- Only include subs if they had a result.
-      if #result == 0 then
+      if #job_result == 0 then
         goto continue
       end
 
-      local blah = {}
-      blah['result'] = result[1]
-      blah['sub_name'] = data_key_to_sub[data_key]
+      local result = {}
+      result['result'] = job_result[1] -- TODO: better name?
+      result['sub_name'] = data_key_to_sub[data_key]
 
       local fn = sub_functions[data_key]
       if fn ~= nil then
-        blah['fn'] = fn
+        result['fn'] = fn
       end
 
-      table.insert(results, blah)
+      table.insert(results, result)
 
       ::continue::
     end
