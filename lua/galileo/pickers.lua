@@ -19,6 +19,8 @@ M._select_default = function(prompt_bufnr)
     return
   elseif selection.fn == nil then
     -- TODO: Doc, consider this. maybe key on `filename`?
+    -- TODO: use action_set from telescope for this:
+    -- https://github.com/nvim-telescope/telescope.nvim/blob/203bf5609137600d73e8ed82703d6b0e320a5f36/lua/telescope/actions/set.lua#L91-L97
     vim.cmd("edit" .. selection.filename)
   else
     local fn_args = vim.split(
