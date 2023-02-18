@@ -1,6 +1,8 @@
 local Job = require('plenary.job')
 local a = require('plenary.async')
 
+local FUNCTION_RESULT_DELIMITER = " "
+
 -- TODO: Replace this with a library?
 local random = math.random
 local function uuid()
@@ -13,49 +15,45 @@ end
 
 M = {}
 
+-- Get debug info for the `fn` function, then set up a `result_pattern` with an
+-- entry for each arg in the function.
+-- NOTE: Functions with variable arguments (e.g. `function(a, ...)`) cannot be
+-- used here.
+M._build_function_result_pattern = function(fn)
+  local func_info = debug.getinfo(fn)
+  if func_info.isvararg then
+    error("Functions must not be variable arity")
+  end
+
+  local arg_list = {}
+
+  for i = 1, func_info.nparams, 1 do
+    local arg = "$" .. i
+    table.insert(arg_list, arg)
+  end
+
+  return table.concat(arg_list, FUNCTION_RESULT_DELIMITER)
+end
+
 M.job_def_factory_builder = function(opts, tx)
   local job_def_factory = function(filename)
     local job_defs = {}
-
     local data_key_to_sub = {}
-
-    -- If `on_match` is a function, add it to a table to use later.
     local sub_functions = {}
 
     for sub_name, on_match in pairs(opts.subs) do
-      -- TODO: Fix docs.
-      -- If the sub has a name, use that as the data_key. Otherwise, swap in
-      -- `ITEM_N`, where `N` is the index of the sub in the input table.
-      -- local data_key = sub
-      -- if type(sub) ~= 'string' then
-      --   data_key = "ITEM_" .. tostring(sub)
-      -- end
+      -- Set up a unique key for each sub. This allows for "joining" any
+      -- functions & labels later.
       local data_key = uuid()
-
       data_key_to_sub[data_key] = sub_name
 
-      local result_pattern = ""
+      local result_pattern
 
       if type(on_match) == "string" then
         result_pattern = on_match
       elseif type(on_match) == "function" then
-        -- TODO: Explain!
-        local func_info = debug.getinfo(on_match)
-        if func_info.isvararg then
-          error("Functions must not be variable arity")
-        end
-
-        local arg_list = {}
-
-        for i = 1, func_info.nparams, 1 do
-          local arg = "$" .. i
-          table.insert(arg_list, arg)
-        end
-
+        result_pattern = M._build_function_result_pattern(on_match)
         sub_functions[data_key] = on_match
-
-        -- TODO: Better delimiter? Use constant?
-        result_pattern = table.concat(arg_list, " ")
       end
 
       local job_def = {
@@ -70,7 +68,7 @@ M.job_def_factory_builder = function(opts, tx)
         },
         -- Use `on_exit` to guarantee we write to the `sender` for every job.
         on_exit = function(j)
-          tx.send({[tostring(data_key)] = j:result()})
+          tx.send({[data_key] = j:result()})
         end,
       }
 
