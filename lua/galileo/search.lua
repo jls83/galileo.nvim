@@ -1,7 +1,7 @@
 local Job = require('plenary.job')
 local a = require('plenary.async')
 
-local FUNCTION_RESULT_DELIMITER = " "
+local g_constants = require("galileo.constants")
 
 -- TODO: Replace this with a library?
 local random = math.random
@@ -32,7 +32,7 @@ M._build_function_result_pattern = function(fn)
     table.insert(arg_list, arg)
   end
 
-  return table.concat(arg_list, FUNCTION_RESULT_DELIMITER)
+  return table.concat(arg_list, g_constants.FUNCTION_RESULT_DELIMITER)
 end
 
 M.job_def_factory_builder = function(opts, tx)
