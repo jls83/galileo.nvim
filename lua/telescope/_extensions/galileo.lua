@@ -12,11 +12,19 @@ local g_search = require('galileo.search')
 local transform_find_results = function(find_results)
   local res = {}
   for k, v in pairs(find_results) do
+    local text
+    if type(v.sub_name) == "number" and v.fn ~= nil then
+      text = 'Function: ' .. v.result
+    elseif type(v.sub_name) == "number" then
+      text = v.result
+    else -- if type(v.sub_name) == "string"
+      text = tostring(v.sub_name)
+    end
+
   -- TODO: figure out the right thing to show
     local finder_obj = {
-      text = k .. ' ' .. v.result,
-      filename = v.result,
-      -- TODO: Gonna use this as the actual value.
+      text = text,
+      -- text = k .. ' ' .. v.result,
       result = v.result,
       fn = v.fn,
     }
@@ -33,7 +41,9 @@ local select_default = function(prompt_bufnr)
 
   print(vim.inspect(selection))
 
-  if selection.fn == nil then
+  if selection == nil then
+    return
+  elseif selection.fn == nil then
     -- TODO: Doc, consider this. maybe key on `filename`?
     vim.cmd('edit' .. selection.filename)
   else
@@ -67,7 +77,7 @@ local g_telescope_find = function(opts)
         text = entry.text,
         display = entry.text, -- TODO
         ordinal = entry.text,
-        filename = entry.filename,
+        filename = entry.result,
         result = entry.result,
         fn = entry.fn,
       }

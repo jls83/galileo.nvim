@@ -17,10 +17,12 @@ M.job_def_factory_builder = function(opts, tx)
   local job_def_factory = function(filename)
     local job_defs = {}
 
-    -- If `what_thing_who` is a function, add it to a table to use later.
+    local data_key_to_sub = {}
+
+    -- If `on_match` is a function, add it to a table to use later.
     local sub_functions = {}
 
-    for _, what_thing_who in pairs(opts.subs) do
+    for sub_name, on_match in pairs(opts.subs) do
       -- TODO: Fix docs.
       -- If the sub has a name, use that as the data_key. Otherwise, swap in
       -- `ITEM_N`, where `N` is the index of the sub in the input table.
@@ -30,15 +32,17 @@ M.job_def_factory_builder = function(opts, tx)
       -- end
       local data_key = uuid()
 
+      data_key_to_sub[data_key] = sub_name
+
       local result_pattern = ""
 
-      print("Sub type: " .. type(what_thing_who))
+      print("Sub type: " .. type(on_match))
 
-      if type(what_thing_who) == "string" then
-        result_pattern = what_thing_who
-      elseif type(what_thing_who) == "function" then
+      if type(on_match) == "string" then
+        result_pattern = on_match
+      elseif type(on_match) == "function" then
         -- TODO: Explain!
-        local func_info = debug.getinfo(what_thing_who)
+        local func_info = debug.getinfo(on_match)
         if func_info.isvararg then
           error("Functions must not be variable arity")
         end
@@ -51,7 +55,7 @@ M.job_def_factory_builder = function(opts, tx)
         end
 
         print('Inserting a func for ' .. data_key)
-        sub_functions[data_key] = what_thing_who
+        sub_functions[data_key] = on_match
 
         -- TODO: Better delimiter? Use constant?
         result_pattern = table.concat(arg_list, " ")
@@ -76,7 +80,7 @@ M.job_def_factory_builder = function(opts, tx)
       table.insert(job_defs, job_def)
     end
 
-    return job_defs, sub_functions
+    return job_defs, sub_functions, data_key_to_sub
   end
 
   return job_def_factory
@@ -88,13 +92,18 @@ M.search = function(filename, t)
   local all_jobs = {}
 
   local sub_functions = {}
+  local data_key_to_sub = {}
 
   for _, thing in pairs(t) do
     local job_def_factory = M.job_def_factory_builder(thing, sender)
-    local job_defs, inner_sub_functions = job_def_factory(filename)
+    local job_defs, inner_sub_functions, inner_data_key_to_sub = job_def_factory(filename)
 
     for data_key, fn in pairs(inner_sub_functions) do
       sub_functions[data_key] = fn
+    end
+
+    for data_key, sub in pairs(inner_data_key_to_sub) do
+      data_key_to_sub[data_key] = sub
     end
 
     for _, job_def in pairs(job_defs) do
@@ -120,7 +129,7 @@ M.search = function(filename, t)
 
       local blah = {}
       blah['result'] = result[1]
-
+      blah['sub_name'] = data_key_to_sub[data_key]
 
       local fn = sub_functions[data_key]
       if fn ~= nil then
