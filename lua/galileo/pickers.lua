@@ -34,21 +34,11 @@ M._select_default = function(prompt_bufnr)
   fn(unpack(fn_args))
 end
 
-M._transform_find_results = function(find_results)
+M._transform_search_results = function(search_results)
   local res = {}
-  for _, v in pairs(find_results) do
-    local text
-    if type(v.sub_name) == "number" and v.fn ~= nil then
-      text = "Function: " .. v.result
-    elseif type(v.sub_name) == "number" then
-      text = v.result
-    else -- if type(v.sub_name) == "string"
-      text = tostring(v.sub_name)
-    end
-
-  -- TODO: figure out the right thing to show
+  for _, v in pairs(search_results) do
     local finder_obj = {
-      text = text,
+      sub_name = v.sub_name,
       result = v.result,
       fn = v.fn,
     }
@@ -58,10 +48,24 @@ M._transform_find_results = function(find_results)
   return res
 end
 
+-- TODO: naming?
+-- TODO: figure out the right thing to show
+M._get_text_from_finder_result = function(find_result)
+  local text
+  if type(find_result.sub_name) == "number" and find_result.fn ~= nil then
+    text = "Function: " .. find_result.result
+  elseif type(find_result.sub_name) == "number" then
+    text = find_result.result
+  else -- if type(find_result.sub_name) == "string"
+    text = tostring(find_result.sub_name)
+  end
+  return text
+end
+
 M.g_telescope_find = function(opts)
   local opts = opts or {}
 
-  local find_results = g_search.search(
+  local search_results = g_search.search(
     vim.fn.expand("%:p"),
     galileo.config.patterns
   )
@@ -71,11 +75,12 @@ M.g_telescope_find = function(opts)
     entry_maker = opts.entry_maker
   else
     entry_maker = function(entry)
+      local text = M._get_text_from_finder_result(entry)
       return {
         value = entry,
-        text = entry.text,
-        display = entry.text, -- TODO
-        ordinal = entry.text,
+        text = text,
+        display = text, -- TODO
+        ordinal = text,
         filename = entry.result,
         result = entry.result,
         fn = entry.fn,
@@ -88,7 +93,7 @@ M.g_telescope_find = function(opts)
     .new(opts, {
         prompt_title = "Galileo",
         finder = finders.new_table({
-          results = M._transform_find_results(find_results),
+          results = M._transform_search_results(search_results),
           entry_maker = entry_maker,
         }),
         -- previewer = conf.file_previewer(opts),
