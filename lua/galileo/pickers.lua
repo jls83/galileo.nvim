@@ -23,6 +23,7 @@ M._select_default = function(prompt_bufnr)
   end
 
   actions.close(prompt_bufnr)
+  -- TODO: do this somewhere else?
   local fn_args = vim.split(
     selection.result,
     g_constants.FUNCTION_RESULT_DELIMITER
@@ -48,18 +49,27 @@ M._transform_search_results = function(search_results)
   return res
 end
 
--- TODO: naming?
--- TODO: figure out the right thing to show
+-- NOTE: This is absolutely not the best implementation for this!
 M._get_text_from_finder_result = function(find_result)
-  local text
-  if type(find_result.sub_name) == "number" and find_result.fn ~= nil then
-    text = "Function: " .. find_result.result
-  elseif type(find_result.sub_name) == "number" then
-    text = find_result.result
-  else -- if type(find_result.sub_name) == "string"
-    text = tostring(find_result.sub_name)
+  local prefix
+  if type(find_result.sub_name) == "string" then
+    prefix = find_result.sub_name
+  elseif find_result.fn ~= nil then
+    prefix = "Function"
+  else
+    prefix = "File"
   end
-  return text
+
+  if find_result.fn ~= nil then
+    -- TODO: do this somewhere else?
+    local fn_args = vim.split(
+      find_result.result,
+      g_constants.FUNCTION_RESULT_DELIMITER
+    )
+    return prefix .. ': function(' .. table.concat(fn_args, ', ') .. ')'
+  else
+    return prefix .. ': ' .. find_result.result
+  end
 end
 
 M.g_telescope_find = function(outer_opts)
@@ -79,7 +89,7 @@ M.g_telescope_find = function(outer_opts)
       return {
         value = entry,
         text = text,
-        display = text, -- TODO
+        display = text,
         ordinal = text,
         filename = entry.result,
         result = entry.result,
