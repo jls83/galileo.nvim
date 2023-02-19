@@ -1,66 +1,10 @@
 local telescope = require("telescope")
-local conf = require("telescope.config").values
-local finders = require("telescope.finders")
-local make_entry = require("telescope.make_entry")
-local pickers = require("telescope.pickers")
 
-local galileo = require('galileo')
-local g_search = require('galileo.search')
-
-local transform_find_results = function(find_results)
-  local res = {}
-  for k, v in pairs(find_results) do
-  -- TODO: figure out the right thing to show?
-    local finder_obj = {
-      text = k .. ' ' .. v,
-      filename = v,
-    }
-    table.insert(res, finder_obj)
-  end
-
-  return res
-end
-
-local g_telescope_find = function(opts)
-  local opts = opts or {}
-
-  local find_results = g_search.search(
-    vim.fn.expand('%:p'),
-    galileo.config.patterns
-  )
-
-  local entry_maker
-  if opts.entry_maker then
-    entry_maker = opts.entry_maker
-  else
-    entry_maker = function(entry)
-      return make_entry.set_default_entry_mt({
-        value = entry,
-        text = entry.text,
-        display = entry.text, -- TODO
-        ordinal = entry.text,
-        filename = entry.filename,
-      }, opts)
-    end
-  end
-
-
-  local picker = pickers
-    .new(opts, {
-        prompt_title = "Galileo",
-        finder = finders.new_table({
-          results = transform_find_results(find_results),
-          entry_maker = entry_maker,
-        }),
-        previewer = conf.file_previewer(opts),
-        sorter = conf.file_sorter(opts),
-    })
-  picker:find()
-end
+local g_pickers = require("galileo.pickers")
 
 return telescope.register_extension({
   exports = {
-    find = g_telescope_find,
+    find = g_pickers.g_telescope_find,
   },
 })
 
