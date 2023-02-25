@@ -2,6 +2,7 @@ local Job = require('plenary.job')
 local a = require('plenary.async')
 
 local g_constants = require("galileo.constants")
+local g_log = require("galileo.log")
 
 -- TODO: Replace this with a library?
 local random = math.random
@@ -66,9 +67,20 @@ M.job_def_factory_builder = function(opts, tx)
           '-r',
           result_pattern,
         },
+        on_start = function()
+          g_log.debug("Job start:", data_key, opts.pattern, result_pattern)
+        end,
         -- Use `on_exit` to guarantee we write to the `sender` for every job.
         on_exit = function(j)
-          tx.send({[data_key] = j:result()})
+          local job_result = j:result()
+          local found_result_message
+          if #job_result == 0 then
+            found_result_message = "(No results)"
+          else
+            found_result_message = "(Found results)"
+          end
+          tx.send({[data_key] = job_result})
+          g_log.debug("Job complete:", data_key, found_result_message)
         end,
       }
 
@@ -107,7 +119,10 @@ M.search = function(filename, rules)
     end
   end
 
-  Job.join(unpack(all_jobs))
+  local completed, code = Job.join(unpack(all_jobs))
+  if code ~= nil then
+    error("rg jobs failed")
+  end
 
   local results = {}
 
