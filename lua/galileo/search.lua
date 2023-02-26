@@ -71,7 +71,7 @@ M.job_def_factory_builder = function(opts, tx)
           g_log.debug("Job start:", data_key, opts.pattern, result_pattern)
         end,
         -- Use `on_exit` to guarantee we write to the `sender` for every job.
-        on_exit = function(j)
+        on_exit = function(j, code)
           local job_result = j:result()
           local found_result_message
           if #job_result == 0 then
@@ -80,7 +80,7 @@ M.job_def_factory_builder = function(opts, tx)
             found_result_message = "(Found results)"
           end
           tx.send({[data_key] = job_result})
-          g_log.debug("Job complete:", data_key, found_result_message)
+          g_log.debug(("Job complete (" .. code .. "):"), data_key, found_result_message)
         end,
       }
 
@@ -119,7 +119,7 @@ M.search = function(filename, rules)
     end
   end
 
-  local completed, code = Job.join(unpack(all_jobs))
+  local _, code = Job.join(unpack(all_jobs))
   if code ~= nil then
     error("rg jobs failed")
   end
